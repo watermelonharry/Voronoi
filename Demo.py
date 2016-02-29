@@ -1,5 +1,5 @@
 import Tkinter as tk
-
+import numpy as np
 from Voronoi import Voronoi
 
 class MainWindow:
@@ -9,16 +9,23 @@ class MainWindow:
     # flag to lock the canvas when drawn
     LOCK_FLAG = False
     
-    def __init__(self, master):
+    def __init__(self, master, width=500, height=500):
         self.master = master
         self.master.title("Voronoi")
 
         self.frmMain = tk.Frame(self.master, relief=tk.RAISED, borderwidth=1)
         self.frmMain.pack(fill=tk.BOTH, expand=1)
 
-        self.w = tk.Canvas(self.frmMain, width=500, height=500)
+        self.width = width
+        self.height = height
+        # <Button-1>:left click
+        # <Button-2>:middle click
+        # <Button-3>:right click
+        # <Double-Button-1>:left-double click
+        # <Triple-Button-1>:left-triple click
+        self.w = tk.Canvas(self.frmMain, width=self.width, height=self.height)
         self.w.config(background='white')
-        self.w.bind('<Double-1>', self.onDoubleClick)
+        self.w.bind('<Button-1>', self.onSingleClick)
         self.w.pack()       
 
         self.frmButton = tk.Frame(self.master)
@@ -26,14 +33,18 @@ class MainWindow:
         
         self.btnCalculate = tk.Button(self.frmButton, text='Calculate', width=25, command=self.onClickCalculate)
         self.btnCalculate.pack(side=tk.LEFT)
-        
+
+        self.btnRandom = tk.Button(self.frmButton, text='Random', width=25, command=self.onClickGenerate)
+        self.btnRandom.pack(side=tk.LEFT)
+
+
         self.btnClear = tk.Button(self.frmButton, text='Clear', width=25, command=self.onClickClear)
         self.btnClear.pack(side=tk.LEFT)
         
     def onClickCalculate(self):
         if not self.LOCK_FLAG:
             self.LOCK_FLAG = True
-        
+
             pObj = self.w.find_all()
             points = []
             for p in pObj:
@@ -45,7 +56,19 @@ class MainWindow:
             lines = vp.get_output()
             self.drawLinesOnCanvas(lines)
             
-            print lines
+            print(lines)
+
+    #generate random points
+    def onClickGenerate(self):
+        if not self.LOCK_FLAG:
+            point_number = 30
+            rand_x = self.width * np.random.rand(point_number)
+            rand_y = self.height * np.random.rand(point_number)
+            rand_point = list(zip(rand_x,rand_y))
+            for i in rand_point:
+                self.w.create_oval(i[0]-self.RADIUS, i[1]-self.RADIUS, i[0]+self.RADIUS, i[1]+self.RADIUS, fill="yellow")
+
+
 
     def onClickClear(self):
         self.LOCK_FLAG = False
@@ -61,7 +84,7 @@ class MainWindow:
 
 def main(): 
     root = tk.Tk()
-    app = MainWindow(root)
+    app = MainWindow(root,500,500)
     root.mainloop()
 
 if __name__ == '__main__':
