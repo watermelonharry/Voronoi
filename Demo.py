@@ -1,6 +1,7 @@
 import Tkinter as tk
 import numpy as np
 from Voronoi import Voronoi
+import geometry
 
 class MainWindow:
     # radius of drawn points on canvas
@@ -11,7 +12,8 @@ class MainWindow:
     
     def __init__(self, master, width=500, height=500):
         self.master = master
-        self.master.title("Voronoi")
+        self.master.title("Voronoi or Delaunay")
+        self.points = set()
 
         self.frmMain = tk.Frame(self.master, relief=tk.RAISED, borderwidth=1)
         self.frmMain.pack(fill=tk.BOTH, expand=1)
@@ -30,18 +32,21 @@ class MainWindow:
 
         self.frmButton = tk.Frame(self.master)
         self.frmButton.pack()
-        
-        self.btnCalculate = tk.Button(self.frmButton, text='Calculate', width=25, command=self.onClickCalculate)
-        self.btnCalculate.pack(side=tk.LEFT)
-
-        self.btnRandom = tk.Button(self.frmButton, text='Random', width=25, command=self.onClickGenerate)
+        ##calculate voronoi gram
+        self.btnCalculateVoro = tk.Button(self.frmButton, text='Cal voro', width=20, command=self.onClickCalculateVoro)
+        self.btnCalculateVoro.pack(side=tk.LEFT)
+        ##generate delaunay gram
+        self.btnCalculateDelau = tk.Button(self.frmButton, text = 'Cal Delau', width = 20, command = self.onClickCalculateDelau)
+        self.btnCalculateDelau.pack(side = tk.LEFT)
+        ##generate random points
+        self.btnRandom = tk.Button(self.frmButton, text='Random', width=20, command=self.onClickGenerate)
         self.btnRandom.pack(side=tk.LEFT)
 
 
-        self.btnClear = tk.Button(self.frmButton, text='Clear', width=25, command=self.onClickClear)
+        self.btnClear = tk.Button(self.frmButton, text='Clear', width=20, command=self.onClickClear)
         self.btnClear.pack(side=tk.LEFT)
         
-    def onClickCalculate(self):
+    def onClickCalculateVoro(self):
         if not self.LOCK_FLAG:
             self.LOCK_FLAG = True
 
@@ -57,6 +62,18 @@ class MainWindow:
             self.drawLinesOnCanvas(lines)
             
             print(lines)
+
+    def onClickCalculateDelau(self):
+        pObj = self.w.find_all()
+        points = []
+        for p in pObj:
+            coord = self.w.coords(p)
+            points.append(geometry.Point(coord[0]+self.RADIUS, coord[1]+self.RADIUS))
+        print(points)
+        triangles = geometry.delaunay_triangulation(points)
+        for tri in triangles:
+            self.drawPolyOnCanvas(tri)
+        print(triangles)
 
     #generate random points
     def onClickGenerate(self):
@@ -74,13 +91,16 @@ class MainWindow:
         self.LOCK_FLAG = False
         self.w.delete(tk.ALL)
 
-    def onDoubleClick(self, event):
+    def onSingleClick(self, event):
         if not self.LOCK_FLAG:
             self.w.create_oval(event.x-self.RADIUS, event.y-self.RADIUS, event.x+self.RADIUS, event.y+self.RADIUS, fill="black")
 
     def drawLinesOnCanvas(self, lines):
         for l in lines:
             self.w.create_line(l[0], l[1], l[2], l[3], fill='blue')
+
+    def drawPolyOnCanvas(self, poly):
+        self.w.create_polygon(poly.a.x, poly.a.y, poly.b.x, poly.b.y, poly.c.x, poly.c.y, fill = '', outline = 'black' )
 
 def main(): 
     root = tk.Tk()
