@@ -2,6 +2,7 @@ import Tkinter as tk
 import numpy as np
 from Voronoi import Voronoi
 import geometry
+from PIL import Image, ImageTk
 
 class MainWindow:
     # radius of drawn points on canvas
@@ -10,16 +11,18 @@ class MainWindow:
     # flag to lock the canvas when drawn
     LOCK_FLAG = False
     
-    def __init__(self, master, width=500, height=500):
+    def __init__(self, master):
         self.master = master
         self.master.title("Voronoi or Delaunay")
         self.points = set()
 
+        self.im = ImageTk.PhotoImage(Image.open("D:/VMexchange/GPS_data/map_800x750.jpg"))
+        ##!!dont know why yet
+        self.width, self.height = [ x/2 for x in self.im._PhotoImage__size]
+
         self.frmMain = tk.Frame(self.master, relief=tk.RAISED, borderwidth=1)
         self.frmMain.pack(fill=tk.BOTH, expand=1)
 
-        self.width = width
-        self.height = height
         # <Button-1>:left click
         # <Button-2>:middle click
         # <Button-3>:right click
@@ -28,7 +31,15 @@ class MainWindow:
         self.w = tk.Canvas(self.frmMain, width=self.width, height=self.height)
         self.w.config(background='white')
         self.w.bind('<Button-1>', self.onSingleClick)
-        self.w.pack()       
+        self.w.create_image(0, 0,image = self.im, tag = 'map')
+        self.w.pack()
+
+        ##try to open image as canvas
+        # self.w.create_image(0, 0,image = self.im, tag = 'map')
+        # self.imgobj = self.im
+        # self.label = tk.Label(self.master,text = '')
+        # self.label['image'] = self.imgobj
+        # self.label.pack()
 
         self.frmButton = tk.Frame(self.master)
         self.frmButton.pack()
@@ -45,7 +56,8 @@ class MainWindow:
 
         self.btnClear = tk.Button(self.frmButton, text='Clear', width=20, command=self.onClickClear)
         self.btnClear.pack(side=tk.LEFT)
-        
+
+
     def onClickCalculateVoro(self):
         if not self.LOCK_FLAG:
             self.LOCK_FLAG = True
@@ -59,7 +71,7 @@ class MainWindow:
             vp = Voronoi(points)
             vp.process()
             lines = vp.get_output()
-            self.drawLinesOnCanvas(lines)
+            self.drawLinesOnCanvas(lines, tag = 'Voro')
             
             print(lines)
 
@@ -72,7 +84,7 @@ class MainWindow:
         print(points)
         triangles = geometry.delaunay_triangulation(points)
         for tri in triangles:
-            self.drawPolyOnCanvas(tri)
+            self.drawPolyOnCanvas(tri, tag = 'Delau')
         print(triangles)
 
     #generate random points
@@ -89,22 +101,25 @@ class MainWindow:
 
     def onClickClear(self):
         self.LOCK_FLAG = False
-        self.w.delete(tk.ALL)
+        self.w.delete('Voro','Delau')
 
     def onSingleClick(self, event):
         if not self.LOCK_FLAG:
             self.w.create_oval(event.x-self.RADIUS, event.y-self.RADIUS, event.x+self.RADIUS, event.y+self.RADIUS, fill="black")
 
-    def drawLinesOnCanvas(self, lines):
+    def drawLinesOnCanvas(self, lines, tag):
         for l in lines:
-            self.w.create_line(l[0], l[1], l[2], l[3], fill='blue')
+            self.w.create_line(l[0], l[1], l[2], l[3], fill='blue', tag = tag)
 
-    def drawPolyOnCanvas(self, poly):
-        self.w.create_polygon(poly.a.x, poly.a.y, poly.b.x, poly.b.y, poly.c.x, poly.c.y, fill = '', outline = 'black' )
+    def drawPolyOnCanvas(self, poly, tag):
+        for point in poly:
+            if point.x >= self.width or point.x <= 0 or point.y >= self.width or point.y <= 0:
+                return None
+        self.w.create_polygon(poly.a.x, poly.a.y, poly.b.x, poly.b.y, poly.c.x, poly.c.y, fill = '', outline = 'black', tag = tag)
 
 def main(): 
     root = tk.Tk()
-    app = MainWindow(root,500,500)
+    app = MainWindow(root)
     root.mainloop()
 
 if __name__ == '__main__':
